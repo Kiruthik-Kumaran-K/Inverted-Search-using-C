@@ -1,0 +1,4 @@
+Hello world
+This is a good day
+Hello embedded systems
+apple banana apple

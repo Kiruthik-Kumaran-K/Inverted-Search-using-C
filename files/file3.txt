@@ -1,0 +1,4 @@
+Hello everyone
+Welcome to embedded systems
+apple orange apple
+microcontroller programming is interesting
