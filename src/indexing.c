@@ -294,10 +294,6 @@ int display_DB(main_node_t *head[])
         {
             found = 1;
 
-            // printf("[%-3d]      %-20s %d file/s",
-            //        i, temp->word, temp->f_count);
-
-            // printf(" ");
             char count_str[20];
             snprintf(count_str, sizeof(count_str), "%d file/s", temp->f_count);
 
@@ -307,8 +303,7 @@ int display_DB(main_node_t *head[])
 
             while (sub != NULL)
             {
-                printf("%-15s -> %d",
-                       sub->f_name, sub->w_count);
+                printf("%-15s -> %d",sub->f_name, sub->w_count);
 
                 sub = sub->link;
 
@@ -333,12 +328,27 @@ int display_DB(main_node_t *head[])
     return SUCCESS;
 }
 
-
-
-
 int search_DB(main_node_t *head[], char *word)
 {
     if (head == NULL || word == NULL || word[0] == '\0')
+    {
+        return FAILURE;
+    }
+
+    /* Convert search word to lowercase */
+    char search_word[NAMELENGTH];
+    int i = 0;
+
+    while (word[i] != '\0' && i < NAMELENGTH - 1)
+    {
+        search_word[i] = (char)tolower((unsigned char)word[i]);
+        i++;
+    }
+
+    search_word[i] = '\0';
+
+    /* Reject words that exceed the maximum length */
+    if (word[i] != '\0')
     {
         return FAILURE;
     }
@@ -356,7 +366,7 @@ int search_DB(main_node_t *head[], char *word)
 
     while (temp != NULL)
     {
-        if (strcmp(temp->word, word) == 0)
+        if (strcmp(temp->word,search_word) == 0)
         {
             printf("Word: %s\n", temp->word);
             printf("File count: %d\n", temp->f_count);

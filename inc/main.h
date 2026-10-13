@@ -52,12 +52,9 @@ int is_duplicate_file(file_node_t *head, char *f_name);
 
 /* Create Database */
 int create_DB(file_node_t *file_head, main_node_t *head[]);
-int read_datafile(file_node_t *file_node,
-                  main_node_t *head[],
-                  char *f_name);
+int read_datafile(file_node_t *file_node, main_node_t *head[], char *f_name);
 int insert_at_last_main(main_node_t **head, char *word);
 int update_sub_node(main_node_t *main_node, char *fname);
-int update_word_count(main_node_t **head, char *fname);
 int insert_word(main_node_t *head[], char *word, char *fname);
 
 /*hash functionality*/
@@ -69,7 +66,6 @@ int display_DB(main_node_t *head[]);
 
 /* Update database */
 int update_existing_DB(file_node_t **file_head, main_node_t *head[]);
-int restore_DB(file_node_t **file_head, main_node_t *head[]);
 
 /* Search Database */
 int search_DB(main_node_t *head[], char *word);

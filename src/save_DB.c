@@ -61,8 +61,7 @@ int save_DB(main_node_t *head[], char *fname)
 
         while (temp != NULL)
         {
-            if (fprintf(fptr, "word is [%s]: file_count: %d",
-                        temp->word, temp->f_count) < 0)
+            if (fprintf(fptr, "word is [%s]: file_count: %d",temp->word, temp->f_count) < 0)
             {
                 fclose(fptr);
                 return FAILURE;
@@ -72,8 +71,7 @@ int save_DB(main_node_t *head[], char *fname)
 
             while (sub != NULL)
             {
-                if (fprintf(fptr, " file: %s and word_count: %d",
-                            sub->f_name, sub->w_count) < 0)
+                if (fprintf(fptr, " file: %s and word_count: %d", sub->f_name, sub->w_count) < 0)
                 {
                     fclose(fptr);
                     return FAILURE;
