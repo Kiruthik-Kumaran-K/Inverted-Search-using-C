@@ -269,49 +269,6 @@ int create_DB(file_node_t *file_head, main_node_t *head[])
     return SUCCESS;
 }
 
-// int display_DB(main_node_t *head[])
-// {
-//     if (head == NULL)
-//     {
-//         return FAILURE;
-//     }
-
-//     int found = 0;
-
-//     for (int i = 0; i < SIZE; i++)
-//     {
-//         main_node_t *temp = head[i];
-
-//         while (temp != NULL)
-//         {
-//             found = 1;
-
-//             printf("\nWord: %s\n", temp->word);
-//             printf("File count: %d\n", temp->f_count);
-
-//             sub_node_t *sub = temp->sub_link;
-
-//             while (sub != NULL)
-//             {
-//                 printf("Filename: %s, Word count: %d\n",
-//                        sub->f_name, sub->w_count);
-
-//                 sub = sub->link;
-//             }
-
-//             temp = temp->link;
-//         }
-//     }
-
-//     if (found == 0)
-//     {
-//         printf("Database is empty.\n");
-//         return EMPTYLIST;
-//     }
-
-//     return SUCCESS;
-// }
-
 
 int display_DB(main_node_t *head[])
 {
