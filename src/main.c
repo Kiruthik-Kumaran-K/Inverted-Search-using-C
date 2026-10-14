@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
                 break;
 
             case 3:
-                /* Call your update function here */
                 int status = update_existing_DB(&file_head, head);
 
                 if (status == SUCCESS)

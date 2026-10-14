@@ -1,55 +1,92 @@
 #include "../inc/main.h"
 
+/*
+ * Function: insert_at_last_main()
+ *
+ * Description:
+ * Inserts a new word into the main linked list in alphabetical
+ * order. If the word already exists, insertion is not performed.
+ *
+ * Algorithm:
+ * 1. Validate the input arguments and word length.
+ * 2. Traverse the linked list to find the correct sorted position.
+ * 3. If the word already exists, return REPEATED.
+ * 4. Allocate memory for a new main node.
+ * 5. Initialize the new node's members.
+ * 6. Insert the node at the beginning or after the previous node.
+ *
+ * Return:
+ * SUCCESS - Word inserted successfully.
+ * REPEATED - Word already exists in the list.
+ * FAILURE - Invalid input or memory allocation failure.
+ */
 int insert_at_last_main(main_node_t **head, char *word)
 {
+    /* Validate the head pointer and word */
     if (head == NULL || word == NULL || word[0] == '\0')
     {
         return FAILURE;
     }
 
+    /* Ensure the word fits in the node's word array */
     if (strlen(word) >= NAMELENGTH)
     {
         return FAILURE;
     }
 
-    /* Find the correct sorted position */
+    /*
+     * Find the correct alphabetical position.
+     * prev points to the previous node.
+     * temp points to the current node.
+     */
     main_node_t *prev = NULL;
     main_node_t *temp = *head;
 
     while (temp != NULL)
     {
+        /* Compare the current word with the word to be inserted */
         int result = strcmp(temp->word, word);
 
-        /* Word already exists */
+        /* Word already exists; no duplicate node is needed */
         if (result == 0)
         {
             return REPEATED;
         }
 
-        /* New word belongs before current word */
+        /*
+         * Current word comes after the new word alphabetically.
+         * Stop here and insert the new node before temp.
+         */
         if (result > 0)
         {
             break;
         }
 
+        /* Move both pointers forward to continue searching */
         prev = temp;
         temp = temp->link;
     }
 
-    /* Allocate the new node */
+    /* Allocate memory for the new main node */
     main_node_t *new_node = malloc(sizeof(main_node_t));
 
+    /* Check whether memory allocation succeeded */
     if (new_node == NULL)
     {
         return FAILURE;
     }
 
+    /* Initialize the new node with the word and default values */
     strcpy(new_node->word, word);
     new_node->link = temp;
     new_node->sub_link = NULL;
     new_node->f_count = 0;
 
-    /* Insert at the beginning or after prev */
+    /*
+     * Insert the node at the correct position.
+     * If prev is NULL, insertion is at the beginning.
+     * Otherwise, link the previous node to the new node.
+     */
     if (prev == NULL)
     {
         *head = new_node;
@@ -63,6 +100,28 @@ int insert_at_last_main(main_node_t **head, char *word)
 }
 
 
+/*
+ * Function: update_sub_node()
+ *
+ * Description:
+ * Updates the subnode list of a main node for a particular filename.
+ *
+ * If the filename already exists in the subnode list, increments
+ * its word count. Otherwise, creates a new subnode for the filename
+ * and appends it to the end of the subnode list.
+ *
+ * Algorithm:
+ * 1. Validate the main node and filename.
+ * 2. Traverse the subnode list to search for the filename.
+ * 3. If the filename exists, increment its word count.
+ * 4. If it does not exist, allocate and initialize a new subnode.
+ * 5. Insert the new subnode at the end of the list.
+ * 6. Increment the main node's file count.
+ *
+ * Return:
+ * SUCCESS - Existing subnode updated or new subnode inserted.
+ * FAILURE - Invalid arguments or memory allocation failure.
+ */
 int update_sub_node(main_node_t *main_node, char *fname)
 {
     /* Validate the arguments */
@@ -71,40 +130,55 @@ int update_sub_node(main_node_t *main_node, char *fname)
         return FAILURE;
     }
 
-    /* Traverse the existing subnode list */
+    /* Start traversing the subnode list of the current word */
     sub_node_t *temp = main_node->sub_link;
 
     while (temp != NULL)
     {
-        /* Check whether this filename already exists */
+        /* Check whether this filename is already present */
         if (strcmp(temp->f_name, fname) == 0)
         {
+            /*
+             * Filename already exists.
+             * Increment the number of times the word occurs
+             * in this file and return without creating a node.
+             */
             temp->w_count++;
             return SUCCESS;
         }
 
+        /* Move to the next subnode */
         temp = temp->link;
     }
 
-    /* Filename not found: create a new subnode */
+    /*
+     * Filename not found.
+     * Allocate memory for a new subnode to store this file.
+     */
     sub_node_t *new_node = malloc(sizeof(sub_node_t));
 
+    /* Check whether memory allocation succeeded */
     if (new_node == NULL)
     {
         return FAILURE;
     }
 
+    /* Initialize the new subnode */
     strcpy(new_node->f_name, fname);
     new_node->w_count = 1;
     new_node->link = NULL;
 
-    /* Insert the subnode at the end */
+    /*
+     * Insert the new subnode at the end of the list.
+     * If the list is empty, the new node becomes the first node.
+     */
     if (main_node->sub_link == NULL)
     {
         main_node->sub_link = new_node;
     }
     else
     {
+        /* Find the last subnode */
         temp = main_node->sub_link;
 
         while (temp->link != NULL)
@@ -112,340 +186,120 @@ int update_sub_node(main_node_t *main_node, char *fname)
             temp = temp->link;
         }
 
+        /* Link the last subnode to the new node */
         temp->link = new_node;
     }
 
+    /*
+     * A new filename has been added.
+     * Increment the number of distinct files containing this word.
+     */
     main_node->f_count++;
 
     return SUCCESS;
 }
 
 
+/*
+ * Function: insert_word()
+ *
+ * Description:
+ * Inserts a word into the appropriate hash table bucket and
+ * maintains its filename and word-frequency information.
+ *
+ * Algorithm:
+ * 1. Validate the input arguments.
+ * 2. Calculate the hash index for the given word.
+ * 3. Search for the word in the selected bucket.
+ * 4. If the word exists, update its subnode information.
+ * 5. If the word does not exist, insert a new main node.
+ * 6. Search for the newly inserted main node.
+ * 7. Update its filename information by creating or updating
+ *    the corresponding subnode.
+ *
+ * Return:
+ * SUCCESS - Word information updated successfully.
+ * FAILURE - Invalid input or an operation failed.
+ * Other status values may be returned by called functions.
+ */
 int insert_word(main_node_t *head[], char *word, char *fname)
 {
+    /* Validate the hash table, word, and filename */
     if (head == NULL || word == NULL || fname == NULL ||
         word[0] == '\0' || fname[0] == '\0')
     {
         return FAILURE;
     }
 
-    /* Step 1: Find the appropriate bucket */
+    /* Step 1: Calculate the hash index for the given word */
     int index = hash_function(word);
 
+    /* Stop if the hash function reports an invalid index */
     if (index == FAILURE)
     {
         return FAILURE;
     }
 
-    /* Step 2: Search for the word in that bucket */
+    /*
+     * Step 2: Access the selected hash bucket.
+     * temp points to the first main node in this bucket.
+     */
     main_node_t *temp = head[index];
 
+    /* Traverse the bucket to search for the word */
     while (temp != NULL)
     {
+        /* Check whether the word already exists */
         if (strcmp(temp->word, word) == 0)
         {
-            /* Word exists: update its filename information */
+            /*
+             * Word exists.
+             * Update its filename information:
+             * - Increment w_count if the filename already exists.
+             * - Create a new subnode if the filename is not present.
+             */
             return update_sub_node(temp, fname);
         }
 
+        /* Move to the next main node in the bucket */
         temp = temp->link;
     }
 
-    /* Step 3: Word does not exist: create its main node */
+    /*
+     * Step 3: Word does not exist.
+     * Insert a new main node at the correct alphabetical
+     * position in the selected bucket.
+     */
     int status = insert_at_last_main(&head[index], word);
 
+    /* Check whether main-node insertion succeeded */
     if (status != SUCCESS)
     {
         return status;
     }
 
-    /* Step 4: Find the newly inserted main node */
+    /*
+     * Step 4: Search the bucket again to find the newly
+     * inserted main node.
+     */
     temp = head[index];
 
     while (temp != NULL)
     {
+        /* Locate the main node containing the given word */
         if (strcmp(temp->word, word) == 0)
         {
+            /*
+             * Step 5: Add the filename information to this node.
+             * Since the main node is new, its subnode list is empty.
+             */
             return update_sub_node(temp, fname);
         }
 
+        /* Continue searching the bucket */
         temp = temp->link;
     }
 
+    /* Return failure if the inserted word cannot be located */
     return FAILURE;
 }
-
-
-
-int read_datafile(file_node_t *file_node,  main_node_t *head[], char *f_name)
-{
-    (void)file_node;
-
-    if (head == NULL || f_name == NULL || f_name[0] == '\0')
-    {
-        return FAILURE;
-    }
-
-    FILE *fptr = fopen(f_name, "r");
-
-    if (fptr == NULL)
-    {
-        printf("Error: Unable to open %s\n", f_name);
-        return FAILURE;
-    }
-
-    char word[NAMELENGTH];
-    int index = 0;
-    int ch;
-
-    while ((ch = fgetc(fptr)) != EOF)
-    {
-        if (isalpha((unsigned char)ch))
-        {
-            if (index < NAMELENGTH - 1)
-            {
-                word[index++] = (char)tolower((unsigned char)ch);
-            }
-        }
-        else
-        {
-            if (index > 0)
-            {
-            word[index] = '\0';
-
-            int status = insert_word(head, word, f_name);
-
-            if (status != SUCCESS)
-            {
-                  fclose(fptr);
-                  return status;
-            }
-
-            index = 0;
-            }
-        }
-    }
-
-    /* Process the final word if the file ends with a letter */
-      if (index > 0)
-      {
-      word[index] = '\0';
-
-      int status = insert_word(head, word, f_name);
-
-      if (status != SUCCESS)
-      {
-            fclose(fptr);
-            return status;
-      }
-
-      }
-
-    return SUCCESS;
-}
-
-
-int create_DB(file_node_t *file_head, main_node_t *head[])
-{
-    if (head == NULL || file_head == NULL)
-    {
-        return FAILURE;
-    }
-
-    file_node_t *temp = file_head;
-
-    while (temp != NULL)
-    {
-        int status = read_datafile(temp, head, temp->f_name);
-
-        if (status != SUCCESS)
-        {
-            return status;
-        }
-
-        temp = temp->link;
-    }
-
-    return SUCCESS;
-}
-
-
-int display_DB(main_node_t *head[])
-{
-    if (head == NULL)
-    {
-        return FAILURE;
-    }
-
-    printf("\n%-10s %-20s %-15s %s\n",
-           "[index]", "[word]", "file_count",
-           "File_name and word_count");
-
-    printf("------------------------------------------------"
-           "-----------------------------------------------\n");
-
-    int found = 0;
-
-    for (int i = 0; i < SIZE; i++)
-    {
-        main_node_t *temp = head[i];
-
-        while (temp != NULL)
-        {
-            found = 1;
-
-            char count_str[20];
-            snprintf(count_str, sizeof(count_str), "%d file/s", temp->f_count);
-
-            printf("[%-3d]      %-20s %-15s ",i, temp->word, count_str);
-
-            sub_node_t *sub = temp->sub_link;
-
-            while (sub != NULL)
-            {
-                printf("%-15s -> %d",sub->f_name, sub->w_count);
-
-                sub = sub->link;
-
-                if (sub != NULL)
-                {
-                    printf("  ");
-                }
-            }
-
-            printf("\n");
-
-            temp = temp->link;
-        }
-    }
-
-    if (found == 0)
-    {
-        printf("Database is empty.\n");
-        return EMPTYLIST;
-    }
-
-    return SUCCESS;
-}
-
-int search_DB(main_node_t *head[], char *word)
-{
-    if (head == NULL || word == NULL || word[0] == '\0')
-    {
-        return FAILURE;
-    }
-
-    /* Convert search word to lowercase */
-    char search_word[NAMELENGTH];
-    int i = 0;
-
-    while (word[i] != '\0' && i < NAMELENGTH - 1)
-    {
-        search_word[i] = (char)tolower((unsigned char)word[i]);
-        i++;
-    }
-
-    search_word[i] = '\0';
-
-    /* Reject words that exceed the maximum length */
-    if (word[i] != '\0')
-    {
-        return FAILURE;
-    }
-
-    /* Find the appropriate bucket */
-    int index = hash_function(word);
-
-    if (index == FAILURE)
-    {
-        return FAILURE;
-    }
-
-    /* Search for the word in that bucket */
-    main_node_t *temp = head[index];
-
-    while (temp != NULL)
-    {
-        if (strcmp(temp->word,search_word) == 0)
-        {
-            printf("Word: %s\n", temp->word);
-            printf("File count: %d\n", temp->f_count);
-
-            sub_node_t *sub = temp->sub_link;
-
-            while (sub != NULL)
-            {
-                printf("Filename: %s, Word count: %d\n",
-                       sub->f_name, sub->w_count);
-
-                sub = sub->link;
-            }
-
-            return SUCCESS;
-        }
-
-        temp = temp->link;
-    }
-
-    printf("Word '%s' not found in the database.\n", word);
-    return NOT_PRESENT;
-}
-
-int update_existing_DB(file_node_t **file_head, main_node_t *head[])
-{
-    if (file_head == NULL || head == NULL)
-    {
-        return FAILURE;
-    }
-
-    char fname[NAMELENGTH];
-
-    printf("Enter the file name to update database: ");
-
-    if (scanf("%19s", fname) != 1)
-    {
-        return FAILURE;
-    }
-
-    if (IsFileValid(fname) != SUCCESS)
-    {
-        printf("Error: Invalid input file\n");
-        return FAILURE;
-    }
-
-    if (is_duplicate_file(*file_head, fname))
-    {
-        printf("Error: File is already present in the database\n");
-        return REPEATED;
-    }
-
-    if (store_filenames_to_list(fname, file_head) != SUCCESS)
-    {
-        printf("Error: Unable to add filename\n");
-        return FAILURE;
-    }
-
-    file_node_t *new_file = *file_head;
-
-    while (new_file != NULL && strcmp(new_file->f_name, fname) != 0)
-    {
-        new_file = new_file->link;
-    }
-
-    if (new_file == NULL)
-    {
-        return FAILURE;
-    }
-
-    if (read_datafile(new_file, head, fname) != SUCCESS)
-    {
-        printf("Error: Failed to index new file\n");
-        return FAILURE;
-    }
-
-    printf("Database updated successfully with %s\n", fname);
-
-    return SUCCESS;
-}
-
-
